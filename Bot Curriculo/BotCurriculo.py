@@ -1,3 +1,5 @@
+import telebot
+from telegram.constants import ParseMode
 import requests
 import json
 import os 
@@ -5,92 +7,176 @@ import logging.handlers
 import logging
 from datetime import datetime
 import sys
-
-sys.path.append(r'PATH DAS CLASSES IMPORTADAS')
-
-#import do bot de avisos do log de erro
+from time import sleep
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import re 
+sys.path.append(r'D:\Gdrive\Dados_Publicos_SP\python\GabineteEstrategico')
 from BotTelegram import telegram_bot_sendtext_simple
 
-datahj = datetime.today()
-nmArquivo = str(datahj.strftime("bottelegram.py - %d_%m_%Y.txt"))
-caminhoLog = r'SEU PATH PARA O LOG AQUI'
 
-# DEFINE FORMATO E CONFIGURAÇÕES DO ARQUIVO DE LOG
-log_format = '%(asctime)s:%(levelname)s:%(filename)s:%(message)s'
-logging.basicConfig(filename=caminhoLog+nmArquivo,
-                    filemode='w',
-                    format=log_format)
+datahj = datetime.now()
+nmArquivo = str(datahj.strftime("MandaEmail.py - %d_%m_%Y.txt"))
+caminhoLog = r'D:\Gdrive\Dados_Publicos_SP\python\Logs de Erro/'
+curriculo = r'D:\Gdrive\Curriculo\Bryan Sebben Fauth Zendron - curriculo.pdf'
+GMAIL_ID = 'contatobryanzendron@gmail.com'
+GMAIL_PWD = 'cygfnarakkrsvqmj'
 
+CHAVE_API = "5460892663:AAF56NRaRqePMBwYNeFvDjDzazy5lFF3LCo"
 
+bot = telebot.TeleBot(CHAVE_API)
 
-class TelegramBot:
-    def __init__(self):
-       token = 'SEU TOKEN AQUI'
-       self.url_base = f'https://api.telegram.org/bot{token}/'
-    # Iniciar o Bot
-    def Iniciar(self):
-        update_id=None
-        while True:
-            atualizacao = self.obter_mensagens(update_id)
-            mensagens = atualizacao['result']
-            print(mensagens)
-            if mensagens:
-                for mensagem in mensagens:
-                    update_id = mensagem['update_id']
-                    self.chat_id = mensagem['message']['from']['id']
-                    eh_primeira_mensagem = mensagem['message']['message_id'] == 1
-                    resposta = self.criar_resposta(mensagem,eh_primeira_mensagem)
-                    self.responder(resposta,self.chat_id)
+def iniciar ():
+    @bot.message_handler(commands=["start"])
+    def opcaoStart(mensagem):
+        bot.send_message(mensagem.chat.id, 
+                    text='''Olá meu nome é Bryan Zendron, este é meu chatBot Currículo interaja com ele para descobrir mais sobre minha trajetória profissional. O que você gostaria de saber sobre mim:
+
+*/1. Formação 👨‍🎓
+/2. Idiomas 🌎
+/3. Domínio em tecnologia 👨‍💻
+/4. Certificações 📚
+/5. Download Currículo PDF ⬇️
+/6. Mande uma mensagem no meu e-mail por aqui ! 📩*
+''', 
+                    parse_mode=ParseMode.MARKDOWN)
+
+    @bot.message_handler(commands=["1"])
+    def opcao1(mensagem):
+        texto = '''👨‍🎓 *Formação Acadêmica:* 
+
+Bacharel em Ciência da Computação
+Universidade Paulista - UNIP, Santana de Parnaíba
+01/2018 – 01/2022
+
+Pós Graduação em Inteligência Artificial e Machine Learning
+Universidade Cruzeiro do Sul.
+06/2022 – 06/2023
+'''
+        bot.send_message(mensagem.chat.id, texto,parse_mode=ParseMode.MARKDOWN)
+
+    @bot.message_handler(commands=["2"])
+    def opcao2(mensagem):
+        texto = '''🌎 *Idiomas:*
+
+Portugês 🇧🇷: Nativo  
+Espanhol 🇪🇸: Técnico'''
+        bot.send_message(mensagem.chat.id, texto,parse_mode=ParseMode.MARKDOWN)
+
+    @bot.message_handler(commands=["3"])
+    def opcao3(mensagem):
+        texto = '''*👨‍💻 As tecnologias que eu conheço até o momento são:*
                 
+- Microsoft Power BI
+- Python
+- Microsoft SQL Server
+- HTML 
+- CSS
+- Excel Avançado'''
+        bot.send_message(mensagem.chat.id, texto,parse_mode=ParseMode.MARKDOWN)
 
-    def obter_mensagens(self,update_id):
-        link_requisicao = f'{self.url_base}getUpdates?timeout=100'
-        if update_id:
-            link_requisicao = f'{link_requisicao}&offset={update_id + 1}'
-        resultado = requests.get(link_requisicao)
-        return json.loads(resultado.content)
+    @bot.message_handler(commands=["4"])
+    def opcao4(mensagem):
+        texto = '''*📚 As certificações que possuo até o momento são:*
 
-    def criar_resposta(self,mensagem,eh_primeira_mensagem):
-        mensagem = mensagem['message']['text']
-        if eh_primeira_mensagem == True or mensagem == "menu" or mensagem not in ('0','1'):
-            return f'''Qual é numero da solicitação?{os.linesep}1 - Relatório de Pendências (SMDS){os.linesep}0 - sair'''
+- PL300 - Power BI Data Analyst Associate Microsoft – 12/2022
+- Master Power BI – De A à Z – 09/2021
+- Power BI Intermediário – 09/2021
+- Power BI DAX II Avançado – 07/2022
+- Power BI DAX III Avançado e DAX Studio – 07/2022
+- Python Linguagem de Programação – 05/2022
+- PYTHON 3 - MUNDO 1 – 05/2022
+- PYTHON 3 - MUNDO 2 – 05/2022'''
+        bot.send_message(mensagem.chat.id, texto,parse_mode=ParseMode.MARKDOWN)
+
+    @bot.message_handler(commands=["5"])
+    def opcao5(mensagem):
+        pdf_doc = open(curriculo, 'rb')
+        bot.send_message(mensagem.chat.id, "🧾 *Curriculo:*",parse_mode=ParseMode.MARKDOWN)
+        bot.send_document(mensagem.from_user.id, pdf_doc)
+
+    @bot.message_handler(commands=["6"])
+    def opcao6(mensagem):
+        bot.send_message(mensagem.chat.id, "Vou precisar de algumas informaçoes clique /Sim para continuar.",parse_mode=ParseMode.MARKDOWN)
+
+    @bot.message_handler(commands=["Sim"])
+    def opcaoSim(mensagem):
+        digiteEmail  = bot.send_message(mensagem.chat.id, "Digite o seu Email:",parse_mode=ParseMode.MARKDOWN)
+        bot.register_next_step_handler(digiteEmail, Email)
         
-        
-        token = '5826567171:AAF9gjYj_V-jCmzNmMUVqWtUoz4nv6F4HWM'
-        if mensagem == '1':
-            body = {
-                'chat_id': self.chat_id
-            }
-            caminho = r'D:\Gdrive\Dados_Publicos_SP\python\Relatorios\ProjetoCrescer\Pendencias\\'
-            file_path=self.ultimoArquivo(caminho)
-            files = {
-                'document': open(file_path, 'rb')
-            }
-            r = requests.post(f'https://api.telegram.org/bot{token}/sendDocument', data=body, files=files)
-            if r.status_code >= 400:
-                print('Houve um erro ao enviar mensagem. Detalhe: {}'.format(r.text))
-            else:
-                return('')
-        elif mensagem == '0':
-            return ('Até logo')
+    def Email(pm):
+        email = pm.text.lower()
+        if check(email=email) == False:
+            bot.send_message(pm.chat.id,text='O e-mail digitado é invalido!')
+            digiteEmail =  bot.send_message(pm.chat.id,text='Digite um e-mail valido por favor')
+            bot.register_next_step_handler(digiteEmail, Email)
         else:
-            return 'Gostaria de acessar o menu? Digite "menu"'
+            sent_msg = bot.send_message(pm.chat.id, f"O que você gostaria de mandar?")
+            bot.register_next_step_handler(sent_msg, corpoEmail, email) #Next message will call the age_handler function
 
-    def responder(self,resposta,chat_id):
-        link_de_envio = f'{self.url_base}sendMessage?chat_id={chat_id}&text={resposta}'
-        requests.get(link_de_envio)
+    def corpoEmail(pm, email):
+        corpo = pm.text
+        try:
+            if __name__ =="__main__":
+                enviaEmailSimples(corpo=f'Usuário: {email}\nMensagem: {corpo}')
+                bot.send_message(pm.chat.id, f"Email enviado com Sucesso!.")
+                
+        except Exception as e: 
+            bot.send_message(pm.chat.id, f"Erro ao enviar e-mail, tente novamente mais tarde!")
+            logging.error(e)
+            telegram_bot_sendtext_simple(bot_message='BotTelegram-Replit.py - '+str(e))
 
-#PEGA O ULTIMO ARQUIVO INSERIDO NA PASTA
-    def ultimoArquivo(self,caminho):
-        caminhoDir =  [os.path.join(caminho, nome) for nome in os.listdir(caminho)]
-        caminhoUstr = max(caminhoDir, key=os.path.getctime) 
-        return caminhoUstr
+
+    def verificar(mensagem):
+        return True
+
+    @bot.message_handler(func=verificar)
+    def responder(mensagem):
+        bot.send_message(mensagem.chat.id, 
+                    text='''Olá meu nome é Bryan Zendron, este é meu chatBot Currículo interaja com ele para descobrir mais sobre minha trajetória profissional. O que você gostaria de saber sobre mim:
+
+*/1. Formação 👨‍🎓
+/2. Idiomas 🌎
+/3. Domínio em tecnologia 👨‍💻
+/4. Certificações 📚
+/5. Download Currículo PDF ⬇️
+/6. Mande uma mensagem no meu e-mail por aqui ! 📩*
+''', 
+                    parse_mode=ParseMode.MARKDOWN)
+
+
+    def enviaEmailSimples(corpo):
+        
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)   
+        server.login(GMAIL_ID, GMAIL_PWD)  
+        enviarEmail = MIMEMultipart()
+        enviarEmail['From'] = GMAIL_ID
+        enviarEmail['to'] = 'bryan.zendron@gmail.com' 
+        enviarEmail['subject'] = 'Currículo Chat Bot'
+        enviarEmail.attach(MIMEText(corpo, 'plain'))
+        server.sendmail(enviarEmail["From"], enviarEmail["To"].split(";"), enviarEmail.as_string())
+        server.quit()
+
+
+    regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
+    def check(email):  
+        if(re.search(regex,email)):  
+            checkEmail = True  
+            
+        else:
+            checkEmail = False 
+        return checkEmail
+        
+            
+
+    bot.polling()
+
 try:
     if __name__ =="__main__":
-        bot = TelegramBot()
-        bot.Iniciar()
+        iniciar()
 except Exception as e: 
     logging.error(e)
     telegram_bot_sendtext_simple(bot_message='BotTelegram-Replit.py - '+str(e))
-    bot = TelegramBot()
-    bot.Iniciar()  
+    iniciar()
+
