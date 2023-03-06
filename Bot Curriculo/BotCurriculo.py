@@ -18,12 +18,12 @@ from BotTelegram import telegram_bot_sendtext_simple
 
 datahj = datetime.now()
 nmArquivo = str(datahj.strftime("MandaEmail.py - %d_%m_%Y.txt"))
-caminhoLog = r'D:\Gdrive\Dados_Publicos_SP\python\Logs de Erro/'
-curriculo = r'D:\Gdrive\Curriculo\Bryan Sebben Fauth Zendron - curriculo.pdf'
-GMAIL_ID = 'contatobryanzendron@gmail.com'
-GMAIL_PWD = 'cygfnarakkrsvqmj'
+caminhoLog = r'path do log'
+curriculo = r'path do curriculo'
+GMAIL_ID = 'email gmail'
+GMAIL_PWD = 'senha de app configurada no gmail'
 
-CHAVE_API = "5460892663:AAF56NRaRqePMBwYNeFvDjDzazy5lFF3LCo"
+CHAVE_API = "token do telegram"
 
 bot = telebot.TeleBot(CHAVE_API)
 
@@ -158,7 +158,7 @@ Espanhol 🇪🇸: Técnico'''
         server.sendmail(enviarEmail["From"], enviarEmail["To"].split(";"), enviarEmail.as_string())
         server.quit()
 
-
+#checa se o email digitado tem o padrão de email.
     regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
     def check(email):  
         if(re.search(regex,email)):  
